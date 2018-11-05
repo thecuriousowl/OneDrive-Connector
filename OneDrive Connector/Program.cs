@@ -27,7 +27,7 @@ namespace OneDrive_Connector
             GraphServiceClient graphClient = Authentication.GetAuthenticatedClient();
 
             // Get all shared items
-            DriveExplorer explore = new DriveExplorer(graphClient);
+            // DriveExplorer explore = new DriveExplorer(graphClient);
 
             /*
             List<User> teneoAll = new List<User>();
@@ -59,9 +59,38 @@ namespace OneDrive_Connector
             }
             */
 
-            List<User> test = new List<User>() { graphClient.Users["8ce9630b-a52e-40a0-b5c4-0ef5d6e8d117"].Request().Select("DisplayName,Id,AssignedLicenses").GetAsync().Result };
+            List<User> test = new List<User>() { graphClient.Users["ac6592a5-7466-4baf-ba90-7ea50042c8e7"].Request().Select("DisplayName,Id,AssignedLicenses").GetAsync().Result };
 
-            var sharedStuff = explore.reportSharedFolders(test);
+            //var sharedStuff = explore.reportSharedFolders(test);
+
+            //updatePermissions("C:/temp/OneDrive_Sharing_Report.txt", graphClient);
+
+            Recipient aPerson = new Recipient();
+            EmailAddress address = new EmailAddress();
+            address.Address = "Christian.Mariano@teneoholdings.com";
+            aPerson.EmailAddress = address;
+
+            Message mail = new Message()
+            {
+                Subject = "Test Send",
+                Body = new ItemBody()
+                {
+                    ContentType = BodyType.Text,
+                    Content = "Hello World"
+                },
+                ToRecipients = new List<Recipient>()
+                {
+                    aPerson
+                }
+            };
+
+
+            var testEmail = graphClient.Users["ac6592a5-7466-4baf-ba90-7ea50042c8e7"].SendMail(mail, false).Request().PostAsync();
+            while(testEmail.IsCompleted != true)
+            {
+
+            }
+
 
             // get all shared items
 
@@ -111,6 +140,10 @@ namespace OneDrive_Connector
             // Gather all shareditem meta data in a string array variable
             // input is file path
             var list = System.IO.File.ReadAllLines(input);
+            foreach(var line in list)
+            {
+                Console.WriteLine(line);
+            }
 
             Queue<String> work = new Queue<string>(list);
             List<String> upnUpdated = new List<String>();
@@ -118,6 +151,7 @@ namespace OneDrive_Connector
             // Loop through queue until it is empty
             while(work.Count > 0)
             {
+                Console.WriteLine("Total Permissions to Recreate is " + work.Count);
                 // take one line of input from queue
                 var temp = work.Dequeue();
 
@@ -146,7 +180,7 @@ namespace OneDrive_Connector
                     else { upnChanged = false; }
                 }
 
-                if (upnChanged)
+                if (true)
                 {
                     var awaitDelete = new EventWaitHandle(false, EventResetMode.ManualReset);
 
@@ -155,11 +189,13 @@ namespace OneDrive_Connector
                     var currentPermission = graphClient.Users[userid].Drive.Items[folderid].Permissions[permissionid].Request().GetAsync().Result;
 
                     // Run Delete and then await success
+                    Console.WriteLine("Deleting Permission. . ." + permissionid);
                     var deleteTask = graphClient.Users[userid].Drive.Items[folderid].Permissions[permissionid].Request().DeleteAsync();
                     while(deleteTask.IsCompleted != true)
                     {
                         Thread.Sleep(100);
                     }
+                    Console.WriteLine("Deleted");
 
                     if(deleteTask.IsFaulted)
                     {
@@ -175,14 +211,18 @@ namespace OneDrive_Connector
                                 Email = (graphClient.Users[grantedto].Request().GetAsync().Result).Mail
                             }
                         };
-                        var createTask = graphClient.Users[userid].Drive.Items[folderid].Invite(invitees).Request().PostAsync();
+                        Console.WriteLine("Creating new permission. . .");
+                        var createTask = graphClient.Users[userid].Drive.Items[folderid].Invite(invitees,true,new List<String>() { "write" }, true, null).Request().PostAsync();
+                        while(createTask.IsCompleted != true)
+                        {
+                            Console.WriteLine("waiting for success");
+                            if (createTask.IsFaulted) { Console.WriteLine("Error in creating invite"); }
+                        }
+                        if((createTask.Result).Count > 0) { Console.WriteLine("Invite Sent!"); }
                     }
-
-
-
                 }
                 else { work.Enqueue(temp); }
-
+                Thread.Sleep(50);
             }
         }
         

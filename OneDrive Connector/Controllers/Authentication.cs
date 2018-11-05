@@ -62,7 +62,13 @@ namespace OneDrive_Connector.Controllers
             try
             {
                 var CacheRequest = (await IdentityClientApp.GetAccountsAsync());
-                var First = CacheRequest.First();
+                int count = 0;
+                IAccount First = null;
+                foreach(var thing in CacheRequest)
+                {
+                    if (count == 0) { First = thing; }
+                    count++;
+                }
                 authResult = await IdentityClientApp.AcquireTokenSilentAsync(Scopes, First);
                 UserToken = authResult.AccessToken;
             }
