@@ -29,6 +29,7 @@ namespace OneDrive_Connector
             // Get all shared items
             DriveExplorer explore = new DriveExplorer(graphClient);
 
+            /*
             List<User> teneoAll = new List<User>();
             // Get full licensed user list 
             int count = 1;
@@ -56,10 +57,11 @@ namespace OneDrive_Connector
                     enabledUsers.Add(user);
                 }
             }
+            */
 
             List<User> test = new List<User>() { graphClient.Users["8ce9630b-a52e-40a0-b5c4-0ef5d6e8d117"].Request().Select("DisplayName,Id,AssignedLicenses").GetAsync().Result };
 
-            var sharedStuff = explore.reportSharedFolders(enabledUsers);
+            var sharedStuff = explore.reportSharedFolders(test);
 
             // get all shared items
 
@@ -107,6 +109,7 @@ namespace OneDrive_Connector
         public static void updatePermissions(String input, GraphServiceClient graphClient)
         {
             // Gather all shareditem meta data in a string array variable
+            // input is file path
             var list = System.IO.File.ReadAllLines(input);
 
             Queue<String> work = new Queue<string>(list);
@@ -115,6 +118,7 @@ namespace OneDrive_Connector
             // Loop through queue until it is empty
             while(work.Count > 0)
             {
+                // take one line of input from queue
                 var temp = work.Dequeue();
 
                 var split = temp.Split(';');
@@ -137,14 +141,42 @@ namespace OneDrive_Connector
                     if (rootCheck.WebUrl.Contains("teneoglobal"))
                     {
                         upnChanged = true;
+                        upnUpdated.Add(userid);
                     }
                     else { upnChanged = false; }
                 }
 
                 if (upnChanged)
                 {
+                    var awaitDelete = new EventWaitHandle(false, EventResetMode.ManualReset);
+
                     // upn has been updated, recreate permissions
-                    //graphClient.Users[userid].Drive.Items[folderid].Permissions[permissionid].Request().DeleteAsync().
+                    // graphClient.Users[userid].Drive.Items[folderid].Permissions[permissionid].Request().DeleteAsync().
+                    var currentPermission = graphClient.Users[userid].Drive.Items[folderid].Permissions[permissionid].Request().GetAsync().Result;
+
+                    // Run Delete and then await success
+                    var deleteTask = graphClient.Users[userid].Drive.Items[folderid].Permissions[permissionid].Request().DeleteAsync();
+                    while(deleteTask.IsCompleted != true)
+                    {
+                        Thread.Sleep(100);
+                    }
+
+                    if(deleteTask.IsFaulted)
+                    {
+                        Console.WriteLine("Failed to Delete this Permission");
+                        work.Enqueue(temp);
+                    }
+                    else
+                    {
+                        List<DriveRecipient> invitees = new List<DriveRecipient>()
+                        {
+                            new DriveRecipient()
+                            {
+                                Email = (graphClient.Users[grantedto].Request().GetAsync().Result).Mail
+                            }
+                        };
+                        var createTask = graphClient.Users[userid].Drive.Items[folderid].Invite(invitees).Request().PostAsync();
+                    }
 
 
 
