@@ -65,27 +65,8 @@ namespace OneDrive_Connector
 
             //updatePermissions("C:/temp/OneDrive_Sharing_Report.txt", graphClient);
 
-            Recipient aPerson = new Recipient();
-            EmailAddress address = new EmailAddress();
-            address.Address = "Christian.Mariano@teneoholdings.com";
-            aPerson.EmailAddress = address;
-
-            Message mail = new Message()
-            {
-                Subject = "Test Send",
-                Body = new ItemBody()
-                {
-                    ContentType = BodyType.Text,
-                    Content = "Hello World"
-                },
-                ToRecipients = new List<Recipient>()
-                {
-                    aPerson
-                }
-            };
-
-
-            var testEmail = graphClient.Users["ac6592a5-7466-4baf-ba90-7ea50042c8e7"].SendMail(mail, false).Request().PostAsync();
+            var mail = MailHelper.ComposeMail("A Test Email", "Something Random like \n Hello World", new List<string>() { "philip.pan@teneoglobal.com" });
+            var testEmail = graphClient.Users["ac6592a5-7466-4baf-ba90-7ea50042c8e7"].SendMail(mail, true).Request().PostAsync();
             while(testEmail.IsCompleted != true)
             {
 
