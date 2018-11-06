@@ -23,7 +23,7 @@ namespace OneDrive_Connector.Controllers
                 Body = new ItemBody
                 {
                     Content = body,
-                    ContentType = BodyType.Text,
+                    ContentType = BodyType.Html,
                 },
                 Subject = subject,
                 ToRecipients = recipientsList,
