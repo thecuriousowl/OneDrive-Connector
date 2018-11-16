@@ -26,16 +26,14 @@ namespace OneDrive_Connector
         {
             GraphServiceClient graphClient = Authentication.GetAuthenticatedClient();
 
-            string html = System.IO.File.ReadAllText("C:/Users/thecu/Desktop/System Notification.htm");
-            Message test = MailHelper.ComposeMail("HTML TEST", html, new List<String>() { "philip.pan@teneoholdings.com" });
-            var response = graphClient.Me.SendMail(test, null).Request().PostAsync();
-            while (response.IsCompleted != true) { }
-            if (response.IsFaulted) { Console.WriteLine(response.Exception.InnerException.Message); }
-            else { Console.WriteLine("Mail was sent"); }
+
 
             // Get all shared items
             // DriveExplorer explore = new DriveExplorer(graphClient);
-            // List <User> enabledUsers = GraphHelpers.GetAllEnabledUsers(exclusion)
+            List<String> exclusion = new List<String>();
+            List<User> enabledUsers = GraphHelpers.GetAllEnabledUsers(exclusion);
+
+            CheckForNameChange(enabledUsers, graphClient);
 
             //var sharedStuff = explore.reportSharedFolders(test);
 
@@ -64,7 +62,7 @@ namespace OneDrive_Connector
                 var username = split[0];
                 var userid = split[1];
                 var folderid = split[2];
-                var permissionid= split[3];
+                var permissionid = split[3];
                 var grantedto = split[4];
 
                 bool upnChanged = false;
@@ -77,7 +75,7 @@ namespace OneDrive_Connector
                 else
                 {
                     var rootCheck = graphClient.Users[userid].Drive.Root.Request().GetAsync().Result;
-                    if (rootCheck.WebUrl.Contains("teneoglobal"))
+                    if (rootCheck.WebUrl.Contains("teneo_com"))
                     {
                         upnChanged = true;
                         upnUpdated.Add(userid);
@@ -149,14 +147,18 @@ namespace OneDrive_Connector
                 catch { root = null; }
                 if (root != null)
                 {
-                    if (root.WebUrl.Contains("teneoglobal"))
+                    if (root.WebUrl.Contains("teneo_com"))
                     {
                         Console.WriteLine(temp.DisplayName + " has been updated, sending mail.");
+                        String html = System.IO.File.ReadAllText("C:/Rebrand/Notification.html");
+                        html = html.Replace("TENEOAZUREFIRSTNAME",temp.GivenName);
                         // Send mail of MySite reflecting UPN change
-                        Message notification = MailHelper.ComposeMail("UPN Updated",
-                            ("MySite URL is updated for " + temp.DisplayName + " at " + root.WebUrl),
-                            new List<string>() { "Christian.Mariano@TeneoHoldings.com" });
+                        Message notification = MailHelper.ComposeMail("Your Teneo Email Has Been Updated",
+                            html,
+                            new List<string>() { "philip.pan@teneoholdings.com" });
                         graphClient.Me.SendMail(notification, false).Request().PostAsync();
+
+                        // Send asynchronous call to permission rewrite for this user.
                     }
                     else
                     {

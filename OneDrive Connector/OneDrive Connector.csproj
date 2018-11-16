@@ -345,7 +345,6 @@
     <Compile Include="Controllers\MailHelper.cs" />
     <Compile Include="Controllers\Output.cs" />
     <Compile Include="Controllers\SyncCheck.cs" />
-    <Compile Include="Controllers\UserPoll.cs" />
     <Compile Include="Definitions\SharedFolder.cs" />
     <Compile Include="Definitions\UsersSharedItems.cs" />
     <Compile Include="OneDriveParser\DriveExplorer.cs" />

@@ -17,7 +17,7 @@ namespace OneDrive_Connector.Controllers
             // Get full licensed user list 
             int count = 1;
             System.Console.WriteLine("Requesting Page " + count);
-            var users = graphClient.Users.Request().Top(200).Select("DisplayName,Id,AssignedLicenses").GetAsync().Result;
+            var users = graphClient.Users.Request().Top(200).Select("DisplayName,GivenName,Id,AssignedLicenses").GetAsync().Result;
             count++;
             var page = users.CurrentPage;
             teneoAll.AddRange(page);
@@ -50,7 +50,7 @@ namespace OneDrive_Connector.Controllers
             foreach(var user in input)
             {
                 var root = user.MySite;
-                if(root.Contains("teneoglobal"))
+                if(root.Contains("teneo_com"))
                 {
                     result.Add(user);
                 }

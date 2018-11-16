@@ -4,9 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive_Connector.Controllers
+namespace TeneoUpdateNotifier
 {
-    class UserPoll
+    class Program
     {
+        static void Main(string[] args)
+        {
+        }
     }
 }
